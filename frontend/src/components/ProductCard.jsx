@@ -1,5 +1,4 @@
 import React from 'react'
-import { Heart } from 'lucide-react'
 
 const IMG_BASE = 'https://s3.us-east-2.amazonaws.com/website.rentsy/uploads/product_images/cropped'
 
@@ -14,64 +13,45 @@ export default function ProductCard({ product, onSelect, onBook }) {
   const price = product.price_per_day ?? product.price
   const method = product.price_method?.replace(/_/g, ' ') || 'day'
 
+  let badge = null
+  if (product.free_delivery) badge = { type: 'Free Delivery', cls: 'badge-free-delivery' }
+  else if (product.stock_available > 0 || product.available_quantity > 0) badge = { type: 'Available Today', cls: 'badge-available-today' }
+
   return (
-    <div className="product-card group" onClick={() => onSelect?.(product)}>
-      {/* Photo plate */}
-      <div className="relative aspect-square overflow-hidden bg-surface-soft">
+    <div className="product-card" onClick={() => onSelect?.(product)}>
+      <div className="product-img-wrapper">
         {img ? (
-          <img
-            src={img}
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-          />
+          <img src={img} alt={product.name} loading="lazy" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
+          <div className="w-full h-full flex items-center justify-center text-3xl bg-[#F4F5F7]">📦</div>
         )}
-
-        {/* Badges */}
-        {product.rating && product.rating >= 4.5 && (
-          <div className="guest-favorite">
-            <span className="mr-1">⭐</span> Guest favorite
-          </div>
+        {badge && (
+          <span className={`preview-badge ${badge.cls}`}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+            {badge.type}
+          </span>
         )}
-        {product.free_delivery && !(product.rating && product.rating >= 4.5) && (
-          <div className="guest-favorite">Free delivery</div>
-        )}
-
-        {/* Heart */}
         <button
           onClick={(e) => { e.stopPropagation() }}
-          className="heart-btn"
+          className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors"
         >
-          <Heart className="w-4 h-4" />
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#404959" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         </button>
       </div>
-
-      {/* Meta */}
-      <div className="pt-3 pb-2">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-ink truncate">{product.name}</p>
-            {product.store_name && (
-              <p className="text-sm text-muted truncate mt-0.5">{product.store_name}</p>
-            )}
-          </div>
-          {product.rating && (
-            <div className="flex items-center gap-0.5 shrink-0">
-              <span className="text-xs text-ink font-semibold">★</span>
-              <span className="text-xs text-ink font-semibold">{product.rating}</span>
-            </div>
-          )}
+      <div className="p-3 flex flex-col gap-1.5">
+        <div>
+          <h3 className="text-sm font-medium text-[#101B30] truncate leading-tight">{product.name}</h3>
+          <p className="text-xs text-[#404959] truncate">{product.store_name || product.category_name || ''}</p>
         </div>
-
-        <p className="text-sm text-muted mt-0.5">
-          {product.location || `${product.location_suburb || ''} ${product.location_city || ''}`.trim() || 'Gold Coast'}
-        </p>
-
-        <p className="text-sm font-semibold text-ink mt-1.5">
-          {price ? `$${price} ${method}` : ''}
-        </p>
+        <div className="flex items-center gap-1">
+          <span className="location-icon" />
+          <span className="text-xs text-[#707683] truncate">
+            {product.location || `${product.location_suburb || ''} ${product.location_city || ''}`.trim() || 'Gold Coast'}
+          </span>
+        </div>
+        <div className="price-tag">
+          from ${price} / {method}
+        </div>
       </div>
     </div>
   )
