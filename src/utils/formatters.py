@@ -1,27 +1,25 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+from src.utils.renderers import product_card as _product_card_svg
 if TYPE_CHECKING:
     from src.db.models import RentalProduct, BookingResult
 
 def format_product_card(product: RentalProduct, rank: int | None = None, score: float | None = None) -> str:
     rank_badge = {1: "🥇", 2: "🥈", 3: "🥉"}.get(rank, f"#{rank}") if rank else "📦"
-    header = f"### {rank_badge} [{product.name}]({product.url})"
 
+    svg_uri = _product_card_svg(product, rank=rank, score=score)
+    header = f"### {rank_badge} [{product.name}]({product.url})"
     score_bar = ""
     if score:
-        filled = int(score / 10)
-        score_bar = f"\n> **Match Score:** {'█' * filled}{'░' * (10 - filled)} **{score}/100**"
+        filled = int(score // 10)
+        score_bar = f"\n> **Match:** {'█' * filled}{'░' * (10 - filled)} **{score}/100**"
 
     lines = [header]
     if score_bar:
         lines.append(score_bar)
     lines.append("")
-
-    # Image first for visual impact
-    if product.images:
-        img = product.images[0]
-        lines.append(f"![{product.name}]({img})")
-        lines.append("")
+    lines.append(f"![{product.name} card]({svg_uri})")
+    lines.append("")
 
     details = []
     location_parts = []
@@ -43,8 +41,6 @@ def format_product_card(product: RentalProduct, rank: int | None = None, score: 
         details.append(f"🏪 **Store:** {product.store_name}")
     if product.category_name:
         details.append(f"📂 **Category:** {product.category_name}")
-    if product.subcategory_name:
-        details.append(f"📁 **Subcategory:** {product.subcategory_name}")
 
     lines.extend(details)
 
@@ -62,24 +58,17 @@ def format_product_card(product: RentalProduct, rank: int | None = None, score: 
 
 
 def format_booking_confirmation(result: BookingResult) -> str:
+    from src.utils.renderers import booking_confirmation as _booking_svg
+    svg_uri = _booking_svg(
+        ref=result.reference_code,
+        product_name=result.product_name,
+        store=result.store_name,
+        date=result.event_date or 'TBC',
+        total=result.total or 0,
+        status=result.status,
+    )
     lines = [
-        f"# ✅ Booking Submitted Successfully!",
-        "",
-        f"**{result.product_name}**",
-        "",
-        "---",
-        "",
-        "| Detail | Value |",
-        "| :--- | :--- |",
-        f"| 🔖 Reference | **{result.reference_code}** |",
-        f"| 📦 Item | {result.product_name} |",
-        f"| 🏪 Store | {result.store_name} |",
-        f"| 📊 Status | {result.status} |",
-    ]
-    if result.total:
-        lines.append(f"| 💰 Total | **${result.total:.2f}** |")
-
-    lines.extend([
+        f"![Booking Confirmation]({svg_uri})",
         "",
         "### 📬 What Happens Next",
         "",
@@ -88,7 +77,6 @@ def format_booking_confirmation(result: BookingResult) -> str:
         "3. 📞 The store will confirm within **1 hour**",
         "4. 💳 You're only charged once the provider confirms",
         "",
-        "> 🎉 *You're only charged once the provider confirms your booking!*",
-    ])
-
+        f"> 🎉 *Reference: {result.reference_code} — you're only charged once the provider confirms!*",
+    ]
     return "\n".join(lines)

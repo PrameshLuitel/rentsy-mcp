@@ -118,18 +118,23 @@ def get_product_details(slug: str) -> str:
     Parameters:
     - slug: The product slug from the URL (e.g., 'floodlight--single-150w')
     """
+    from src.utils.renderers import product_card as _product_card_svg
     product = get_product_by_slug(slug)
     if not product:
         return f"Product '{slug}' not found. Please search for items first."
 
+    svg_uri = _product_card_svg(product)
+
     lines = [
+        f"![{product.name}]({svg_uri})",
+        "",
         f"# 📋 {product.name}",
         f"[View on Rentsy]({product.url})",
         "",
     ]
 
     if product.images:
-        lines.append(f"![{product.name}]({product.images[0]})")
+        lines.append(f"![{product.name} photo]({product.images[0]})")
         lines.append("")
 
     lines.extend([
@@ -206,12 +211,17 @@ def recommend_best_item(query: str, location: Optional[str] = None, category: Op
     if not result:
         return f"I couldn't find a perfect match for '{query}' in {loc}. Try a broader search."
 
+    from src.utils.renderers import product_card as _product_card_svg
     product, score, reasons = result
+
+    svg_uri = _product_card_svg(product, score=score)
 
     filled = int(score / 10)
     score_bar = '█' * filled + '░' * (10 - filled)
 
     lines = [
+        f"![{product.name}]({svg_uri})",
+        "",
         f"# 🏆 Recommended Item",
         "",
         f"### {product.name}",
@@ -222,7 +232,7 @@ def recommend_best_item(query: str, location: Optional[str] = None, category: Op
     ]
 
     if product.images:
-        lines.append(f"![{product.name}]({product.images[0]})")
+        lines.append(f"![{product.name} photo]({product.images[0]})")
         lines.append("")
 
     lines.extend([
@@ -547,13 +557,15 @@ def find_available_today(category: Optional[str] = None, location: Optional[str]
 @instrument_tool
 def get_rentsy_stats() -> str:
     """Get Rentsy marketplace statistics."""
+    from src.utils.renderers import stats_dashboard
     stats = get_stats()
+    svg_uri = stats_dashboard(stats)
 
     lines = [
+        f"![Rentsy Stats]({svg_uri})",
+        "",
         f"# 📊 Rentsy Marketplace Stats",
         "[Rentsy.com.au](https://www.rentsy.com.au)",
-        "",
-        "---",
         "",
         "| | |",
         "| :--- | :--- |",
@@ -577,15 +589,17 @@ def compare_items(slugs: List[str]) -> str:
     Parameters:
     - slugs: List of product slugs to compare (2-3 items)
     """
+    from src.utils.renderers import comparison as _comparison_svg
     products = [get_product_by_slug(s) for s in slugs if get_product_by_slug(s)]
     if len(products) < 2:
         return "Please provide at least 2 valid product slugs to compare."
 
+    svg_uri = _comparison_svg(products)
+
     lines = [
-        f"# 📊 Side-by-Side Comparison",
-        f"> Comparing **{len(products)} items**",
+        f"![Comparison]({svg_uri})",
         "",
-        "---",
+        f"# 📊 Side-by-Side Comparison",
         "",
     ]
 
@@ -612,10 +626,6 @@ def compare_items(slugs: List[str]) -> str:
 
     lines.append("| 🚚 Delivery | " + " | ".join([
         "✅ Yes" if p.has_delivery else "❌ No" for p in products
-    ]) + " |")
-
-    lines.append("| 📦 Pickup | " + " | ".join([
-        "✅ Yes" if p.has_pickup else "❌ No" for p in products
     ]) + " |")
 
     # Recommendation
