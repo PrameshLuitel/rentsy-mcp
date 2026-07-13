@@ -83,7 +83,7 @@ def product_card(product: 'RentalProduct', rank: Optional[int] = None, score: Op
         tags += '<rect x="{}" y="162" width="80" height="24" rx="12" fill="{}" stroke="#BBF7D0" stroke-width="1"/><text x="{}" y="178" text-anchor="middle" fill="#15803D" font-size="11" font-weight="500">In Stock {}</text>'.format(
             x_off, R['successBg'], x_off + 40, stock)
         x_off += 88
-    if product.free_delivery or product.has_delivery:
+    if product.has_delivery:
         tags += '<rect x="{}" y="162" width="84" height="24" rx="12" fill="{}" stroke="#BFDBFE" stroke-width="1"/><text x="{}" y="178" text-anchor="middle" fill="#1D4ED8" font-size="11" font-weight="500">Delivery avail.</text>'.format(
             x_off, R['blueBg'], x_off + 42)
         x_off += 92
