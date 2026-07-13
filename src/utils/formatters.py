@@ -63,7 +63,7 @@ def format_booking_confirmation(result: BookingResult) -> str:
         ref=result.reference_code,
         product_name=result.product_name,
         store=result.store_name,
-        date=result.event_date or 'TBC',
+        date=getattr(result, 'event_date', None) or 'TBC',
         total=result.total or 0,
         status=result.status,
     )

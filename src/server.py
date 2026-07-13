@@ -347,6 +347,7 @@ def book_rental(
     - delivery_option: "pickup" or "delivery"
     - message: Any special instructions
     """
+    from src.utils.renderers import booking_confirmation as _booking_svg
     product = get_product_by_slug(product_slug)
     if not product:
         return f"Product '{product_slug}' not found. Please search for items first."
@@ -377,8 +378,11 @@ def book_rental(
     )
 
     result = log_booking(payload, product.name, product.store_name or "Rentsy Store", total=cost["total"])
+    svg_uri = _booking_svg(result.reference_code, product.name, product.store_name or "Rentsy Store", event_date, cost['total'], result.status)
 
     lines = [
+        f"![Booking Confirmation]({svg_uri})",
+        "",
         f"# ✅ Booking Request Submitted!",
         "",
         f"**{product.name}**",
