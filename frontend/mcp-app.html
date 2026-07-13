@@ -186,9 +186,21 @@ function handleResult(structuredContent) {
 
 const app = new App({ name: 'Rentsy', version: '1.0.0' });
 
-app.ontoolresult = (content, structuredContent, meta) => {
-  handleResult(structuredContent);
+app.ontoolresult = (params) => {
+  const sc = params?.structuredContent || params?.structured_content;
+  handleResult(sc);
 };
+
+app.ontoolinput = (params) => {
+  // Host sends tool input as soon as it has it; can show a placeholder
+};
+
+app.connect().then(() => {
+  // Handshake complete — host will now send tool-result
+}).catch((err) => {
+  console.error('[Rentsy MCP] connect failed:', err);
+  renderError('Failed to connect: ' + (err?.message || err));
+});
 
 renderWelcome();
 </script>
