@@ -2,7 +2,7 @@ services:
   - type: web
     name: rentsy-mcp
     env: python
-    buildCommand: pip install -e .
+    buildCommand: pip install -e . && cd frontend && npm ci && npm run build
     startCommand: python src/app.py
     envVars:
       - key: SUPABASE_URL

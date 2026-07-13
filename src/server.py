@@ -126,11 +126,18 @@ def get_product_details(slug: str) -> str:
         f"# 📋 {product.name}",
         f"[View on Rentsy]({product.url})",
         "",
+    ]
+
+    if product.images:
+        lines.append(f"![{product.name}]({product.images[0]})")
+        lines.append("")
+
+    lines.extend([
         "---",
         "",
         "| Detail | Value |",
         "| :--- | :--- |",
-    ]
+    ])
 
     if product.price:
         lines.append(f"| 💰 Price | **${product.price:.2f}/{product.price_method.replace('_', ' ')}** |")
@@ -212,11 +219,18 @@ def recommend_best_item(query: str, location: Optional[str] = None, category: Op
         "",
         f"> **Match Score:** {score_bar} **{score}/100**",
         "",
+    ]
+
+    if product.images:
+        lines.append(f"![{product.name}]({product.images[0]})")
+        lines.append("")
+
+    lines.extend([
         "---",
         "",
         "### Why This Item:",
         "",
-    ]
+    ])
 
     for r in reasons:
         lines.append(f"✅ {r}")
@@ -237,12 +251,6 @@ def recommend_best_item(query: str, location: Optional[str] = None, category: Op
         lines.append(f"| 🏪 Store | {product.store_name} |")
     if product.stock_available > 0:
         lines.append(f"| 📦 Stock | {product.stock_available} available |")
-
-    if product.images:
-        lines.extend([
-            "",
-            f"![{product.name}]({product.images[0]})",
-        ])
 
     lines.extend([
         "",

@@ -332,6 +332,63 @@ def health():
     return {"status": "ok", "service": "Rentsy MCP"}
 
 
+# ── Frontend static serving ──
+
+FRONTEND_DIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend", "dist")
+
+if os.path.isdir(FRONTEND_DIST) and os.path.isfile(os.path.join(FRONTEND_DIST, "index.html")):
+    from fastapi.staticfiles import StaticFiles
+    from fastapi.responses import FileResponse, JSONResponse
+    from starlette.exceptions import HTTPException as StarletteHTTPException
+
+    assets_dir = os.path.join(FRONTEND_DIST, "assets")
+    if os.path.isdir(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.exception_handler(StarletteHTTPException)
+    async def spa_fallback(request, exc):
+        if exc.status_code == 404 and not request.url.path.startswith(("/api/", "/mcp/", "/dashboard", "/health")):
+            index_path = os.path.join(FRONTEND_DIST, "index.html")
+            if os.path.isfile(index_path):
+                return FileResponse(index_path, media_type="text/html")
+        return JSONResponse({"error": "Not found"}, status_code=404)
+
+    @app.get("/")
+    async def serve_frontend():
+        return FileResponse(os.path.join(FRONTEND_DIST, "index.html"))
+else:
+    @app.get("/")
+    async def root_landing():
+        from fastapi.responses import HTMLResponse
+        return HTMLResponse(f"""
+        <html>
+        <head>
+            <title>Rentsy MCP Server</title>
+            <style>
+                body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0a0a0f; color: #eee; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }}
+                .card {{ background: #12121a; border: 1px solid #2a2a3a; border-radius: 16px; padding: 40px; max-width: 500px; text-align: center; }}
+                h1 {{ background: linear-gradient(135deg, #ff6b9d, #ff8e53); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
+                a {{ color: #ff6b9d; }}
+                .links {{ margin-top: 24px; }}
+                .links a {{ display: block; padding: 8px; }}
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <h1>Rentsy MCP Server</h1>
+                <p>Australia's rental marketplace API & MCP server</p>
+                <div class="links">
+                    <a href="/dashboard">📊 Dashboard</a>
+                    <a href="/health">💚 Health Check</a>
+                    <a href="/mcp/sse">🔌 MCP SSE Endpoint</a>
+                    <a href="/api/stats">📈 API Stats</a>
+                </div>
+            </div>
+        </body>
+        </html>
+        """)
+
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 10000))

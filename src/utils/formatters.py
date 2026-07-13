@@ -17,6 +17,12 @@ def format_product_card(product: RentalProduct, rank: int | None = None, score: 
         lines.append(score_bar)
     lines.append("")
 
+    # Image first for visual impact
+    if product.images:
+        img = product.images[0]
+        lines.append(f"![{product.name}]({img})")
+        lines.append("")
+
     details = []
     location_parts = []
     if product.location_suburb:
@@ -47,10 +53,6 @@ def format_product_card(product: RentalProduct, rank: int | None = None, score: 
         if len(product.description) > 200:
             desc += "..."
         lines.append(f"\n> *{desc}*")
-
-    if product.images:
-        img = product.images[0]
-        lines.append(f"\n![{product.name}]({img})")
 
     lines.append("")
     lines.append(f"🔗 **[View on Rentsy]({product.url})**")
