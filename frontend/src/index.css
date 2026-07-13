@@ -7,34 +7,88 @@
     scrollbar-width: thin;
     scrollbar-color: #d0d0d0 transparent;
   }
-  *::-webkit-scrollbar { width: 6px; }
+  *::-webkit-scrollbar { width: 6px; height: 6px; }
   *::-webkit-scrollbar-track { background: transparent; }
   *::-webkit-scrollbar-thumb { background: #d0d0d0; border-radius: 3px; }
+
+  html { scroll-behavior: smooth; }
 }
 
-.gradient-text {
-  background: linear-gradient(135deg, #ff6b9d, #ff8e53);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
+@layer components {
+  .category-pill {
+    @apply shrink-0 px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 cursor-pointer select-none;
+  }
+  .category-pill.active {
+    @apply bg-ink text-white border-ink;
+  }
+  .category-pill:not(.active) {
+    @apply bg-canvas text-muted border-hairline hover:border-muted hover:text-ink;
+  }
 
-.gradient-bg {
-  background: linear-gradient(135deg, #ff6b9d, #ff8e53);
-}
+  .search-pill {
+    @apply flex items-center rounded-full border border-hairline shadow-airbnb bg-canvas h-16 overflow-hidden;
+  }
 
-.category-pill {
-  transition: all 0.2s ease;
-}
-.category-pill:hover, .category-pill.active {
-  background: linear-gradient(135deg, #ff6b9d, #ff8e53);
-  color: #fff;
-}
+  .product-card {
+    @apply rounded-md overflow-hidden cursor-pointer bg-canvas;
+    transition: box-shadow 0.25s ease;
+  }
+  .product-card:hover {
+    box-shadow: rgba(0,0,0,0.02) 0 0 0 1px, rgba(0,0,0,0.04) 0 2px 6px, rgba(0,0,0,0.1) 0 4px 8px;
+  }
 
-.product-card {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.product-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(255, 107, 157, 0.15);
+  .btn-primary {
+    @apply bg-rausch text-white rounded-sm px-6 h-12 font-medium text-base transition-colors duration-200;
+  }
+  .btn-primary:hover { @apply bg-rausch-active; }
+  .btn-primary:disabled { @apply bg-rausch-disabled cursor-not-allowed; }
+
+  .btn-secondary {
+    @apply bg-canvas text-ink rounded-sm px-6 h-12 font-medium text-base border border-ink transition-colors duration-200;
+  }
+  .btn-secondary:hover { @apply bg-surface-soft; }
+
+  .btn-ghost {
+    @apply bg-transparent text-ink rounded-sm px-4 h-10 font-medium text-sm transition-colors duration-200;
+  }
+  .btn-ghost:hover { @apply bg-surface-soft; }
+
+  .search-orb {
+    @apply w-12 h-12 rounded-full bg-rausch flex items-center justify-center text-white shrink-0;
+    transition: background-color 0.2s ease;
+  }
+  .search-orb:hover { @apply bg-rausch-active; }
+
+  .guest-favorite {
+    @apply absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-semibold text-ink shadow-airbnb;
+  }
+
+  .heart-btn {
+    @apply absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center transition-all duration-200 text-muted;
+  }
+  .heart-btn:hover { @apply text-rausch; }
+  .heart-btn.saved { @apply text-rausch; }
+
+  .top-nav-link {
+    @apply text-sm font-medium text-muted hover:text-ink transition-colors duration-200 pb-1 relative;
+  }
+  .top-nav-link.active {
+    @apply text-ink;
+  }
+  .top-nav-link.active::after {
+    content: '';
+    @apply absolute bottom-0 left-0 right-0 h-0.5 bg-ink rounded-full;
+  }
+
+  .footer-link {
+    @apply text-sm text-muted hover:text-ink transition-colors duration-200 cursor-pointer;
+  }
+
+  .modal-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+    background: rgba(0,0,0,0.5);
+  }
+  .modal-card {
+    @apply relative bg-canvas rounded-md shadow-airbnb max-h-[90vh] overflow-y-auto w-full;
+  }
 }
