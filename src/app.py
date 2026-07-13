@@ -336,13 +336,7 @@ def health():
 
 FRONTEND_DIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend", "dist")
 
-print(f"[Rentsy] CWD: {os.getcwd()}")
-print(f"[Rentsy] __file__: {__file__}")
-print(f"[Rentsy] __file__ dir: {os.path.dirname(os.path.abspath(__file__))}")
-print(f"[Rentsy] FRONTEND_DIST: {os.path.abspath(FRONTEND_DIST)}")
-print(f"[Rentsy] FRONTEND_DIST exists: {os.path.isdir(FRONTEND_DIST)}")
-print(f"[Rentsy] FRONTEND_DIST contents: {os.listdir(FRONTEND_DIST) if os.path.isdir(FRONTEND_DIST) else 'N/A'}")
-print(f"[Rentsy] FRONTEND_DIST/index.html exists: {os.path.isfile(os.path.join(FRONTEND_DIST, 'index.html'))}")
+print(f"[Rentsy] FRONTEND_DIST: {os.path.abspath(FRONTEND_DIST)} exists={os.path.isdir(FRONTEND_DIST)}")
 
 if os.path.isdir(FRONTEND_DIST) and os.path.isfile(os.path.join(FRONTEND_DIST, "index.html")):
     print("[Rentsy] ✅ Serving frontend from", FRONTEND_DIST)
@@ -371,14 +365,6 @@ else:
     @app.get("/")
     async def root_landing():
         from fastapi.responses import HTMLResponse
-        debug_paths = f"""
-FRONTEND_DIST: {os.path.abspath(FRONTEND_DIST)}<br>
-CWD: {os.getcwd()}<br>
-__file__: {__file__}<br>
-Exists: {os.path.isdir(FRONTEND_DIST)}<br>
-Has index.html: {os.path.isfile(os.path.join(FRONTEND_DIST, 'index.html'))}<br>
-Dist listing: {os.listdir(FRONTEND_DIST) if os.path.isdir(FRONTEND_DIST) else 'N/A'}<br>
-"""
         return HTMLResponse(f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -403,15 +389,12 @@ Dist listing: {os.listdir(FRONTEND_DIST) if os.path.isdir(FRONTEND_DIST) else 'N
         <div class="logo">🏠</div>
         <span class="badge">Rentsy MCP</span>
         <h1>Rentsy Marketplace</h1>
-        <p>Australia's rental marketplace API — frontend is being built.</p>
+        <p>Australia's rental marketplace API</p>
         <div class="links">
             <a href="/dashboard">📊 Dashboard</a>
             <a href="/mcp/sse">🔌 MCP SSE Endpoint</a>
             <a href="/api/stats">📈 API Stats</a>
             <a href="/health">💚 Health</a>
-        </div>
-        <div style="margin-top:24px;padding:12px;background:#F4F5F7;border-radius:8px;font-size:10px;color:#707683;text-align:left;word-break:break-all;">
-            {debug_paths}
         </div>
     </div>
 </body>
