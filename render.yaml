@@ -2,7 +2,16 @@ services:
   - type: web
     name: rentsy-mcp
     env: python
-    buildCommand: pip install -e . && cd frontend && npm ci && npm run build
+    buildCommand: |
+      echo "=== Rentsy Build ===" && \
+      echo "Node: $(node -v 2>/dev/null || echo 'N/A')" && \
+      echo "NPM: $(npm -v 2>/dev/null || echo 'N/A')" && \
+      pip install -e . && \
+      cd frontend && \
+      npm install && \
+      npm run build && \
+      echo "=== Frontend built ===" && \
+      ls -la dist/
     startCommand: python src/app.py
     envVars:
       - key: SUPABASE_URL

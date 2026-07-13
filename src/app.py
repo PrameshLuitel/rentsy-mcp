@@ -336,9 +336,13 @@ def health():
 
 FRONTEND_DIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend", "dist")
 
-print(f"[Rentsy] Frontend dist path: {FRONTEND_DIST}")
-print(f"[Rentsy] Frontend dist exists: {os.path.isdir(FRONTEND_DIST)}")
-print(f"[Rentsy] Frontend index.html exists: {os.path.isfile(os.path.join(FRONTEND_DIST, 'index.html'))}")
+print(f"[Rentsy] CWD: {os.getcwd()}")
+print(f"[Rentsy] __file__: {__file__}")
+print(f"[Rentsy] __file__ dir: {os.path.dirname(os.path.abspath(__file__))}")
+print(f"[Rentsy] FRONTEND_DIST: {os.path.abspath(FRONTEND_DIST)}")
+print(f"[Rentsy] FRONTEND_DIST exists: {os.path.isdir(FRONTEND_DIST)}")
+print(f"[Rentsy] FRONTEND_DIST contents: {os.listdir(FRONTEND_DIST) if os.path.isdir(FRONTEND_DIST) else 'N/A'}")
+print(f"[Rentsy] FRONTEND_DIST/index.html exists: {os.path.isfile(os.path.join(FRONTEND_DIST, 'index.html'))}")
 
 if os.path.isdir(FRONTEND_DIST) and os.path.isfile(os.path.join(FRONTEND_DIST, "index.html")):
     print("[Rentsy] ✅ Serving frontend from", FRONTEND_DIST)
