@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: rentsy-mcp
+    env: python
+    buildCommand: pip install -e .
+    startCommand: python src/app.py
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false

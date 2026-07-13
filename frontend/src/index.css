@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #d0d0d0 transparent;
+  }
+  *::-webkit-scrollbar { width: 6px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb { background: #d0d0d0; border-radius: 3px; }
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #ff6b9d, #ff8e53);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #ff6b9d, #ff8e53);
+}
+
+.category-pill {
+  transition: all 0.2s ease;
+}
+.category-pill:hover, .category-pill.active {
+  background: linear-gradient(135deg, #ff6b9d, #ff8e53);
+  color: #fff;
+}
+
+.product-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(255, 107, 157, 0.15);
+}
