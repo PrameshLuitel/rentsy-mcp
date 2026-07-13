@@ -9,6 +9,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir .
 
 COPY src/ src/
+COPY frontend/dist/ frontend/dist/
 
 ENV PYTHONUNBUFFERED=1
 ENV PORT=10000

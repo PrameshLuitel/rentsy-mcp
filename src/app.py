@@ -334,12 +334,27 @@ def health():
 
 # ── Frontend static serving ──
 
-FRONTEND_DIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend", "dist")
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+_candidates = [
+    os.path.join(_script_dir, "..", "frontend", "dist"),
+    os.path.join(_script_dir, "..", "..", "frontend", "dist"),
+    os.path.join(os.getcwd(), "frontend", "dist"),
+    "/app/frontend/dist",
+]
+FRONTEND_DIST = None
+for _p in _candidates:
+    _ap = os.path.abspath(_p)
+    if os.path.isdir(_ap) and os.path.isfile(os.path.join(_ap, "index.html")):
+        FRONTEND_DIST = _ap
+        print(f"[Rentsy] ✅ Found frontend at {FRONTEND_DIST}")
+        break
 
-print(f"[Rentsy] FRONTEND_DIST: {os.path.abspath(FRONTEND_DIST)} exists={os.path.isdir(FRONTEND_DIST)}")
+if not FRONTEND_DIST:
+    print(f"[Rentsy] ⚠️ Frontend not found. CWD={os.getcwd()} __file__={__file__}")
+    for _p in _candidates:
+        print(f"[Rentsy]   checked: {os.path.abspath(_p)} exists={os.path.isdir(os.path.abspath(_p))}")
 
-if os.path.isdir(FRONTEND_DIST) and os.path.isfile(os.path.join(FRONTEND_DIST, "index.html")):
-    print("[Rentsy] ✅ Serving frontend from", FRONTEND_DIST)
+if FRONTEND_DIST:
     from fastapi.staticfiles import StaticFiles
     from fastapi.responses import FileResponse, JSONResponse
     from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -347,7 +362,6 @@ if os.path.isdir(FRONTEND_DIST) and os.path.isfile(os.path.join(FRONTEND_DIST, "
     assets_dir = os.path.join(FRONTEND_DIST, "assets")
     if os.path.isdir(assets_dir):
         app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
-        print("[Rentsy] ✅ Mounted /assets from", assets_dir)
 
     @app.exception_handler(StarletteHTTPException)
     async def spa_fallback(request, exc):
@@ -361,7 +375,6 @@ if os.path.isdir(FRONTEND_DIST) and os.path.isfile(os.path.join(FRONTEND_DIST, "
     async def serve_frontend():
         return FileResponse(os.path.join(FRONTEND_DIST, "index.html"))
 else:
-    print("[Rentsy] ⚠️ Frontend not built, serving landing page")
     @app.get("/")
     async def root_landing():
         from fastapi.responses import HTMLResponse
