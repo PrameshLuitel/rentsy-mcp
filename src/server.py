@@ -2,6 +2,7 @@ from __future__ import annotations
 import os
 from typing import Optional, List
 from fastmcp import FastMCP
+from fastmcp.tools.base import ToolResult
 from src.db.models import SearchParams, BookingPayload
 from src.db.queries import (
     search_products,
@@ -24,6 +25,37 @@ import json
 mcp = FastMCP("Rentsy Marketplace")
 
 
+@mcp.resource(uri="ui://rentsy/cards", name="Rentsy MCP App", description="Interactive rental marketplace UI", app=True)
+def get_mcp_app() -> str:
+    path = os.path.join(os.path.dirname(__file__), "..", "frontend", "mcp-app.html")
+    with open(path) as f:
+        return f.read()
+
+
+def _to_structured_product(product) -> dict:
+    loc = ", ".join(filter(None, [getattr(product, 'location_suburb', None), getattr(product, 'location_city', None)])) or "Gold Coast"
+    return {
+        "name": product.name,
+        "store": getattr(product, 'store_name', None) or '',
+        "price": f"${product.price:.2f}" if product.price else '',
+        "unit": getattr(product, 'price_method', 'day').replace('_', ' '),
+        "location": loc,
+        "image": (product.images or [None])[0] or '',
+        "stock": getattr(product, 'stock_available', 0) or 0,
+        "delivery": getattr(product, 'has_delivery', False),
+        "pickup": getattr(product, 'has_pickup', False),
+        "url": product.url,
+    }
+
+
+def ui_result(content: str, structured: dict) -> ToolResult:
+    return ToolResult(
+        content=content,
+        structured_content=structured,
+        meta={"ui": {"resourceUri": "ui://rentsy/cards"}},
+    )
+
+
 def instrument_tool(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -39,7 +71,7 @@ def instrument_tool(func):
 
 @mcp.tool()
 @instrument_tool
-def search_rentals(query: str, location: Optional[str] = None, category: Optional[str] = None, max_price: Optional[float] = None) -> str:
+def search_rentals(query: str, location: Optional[str] = None, category: Optional[str] = None, max_price: Optional[float] = None) -> ToolResult:
     """
     Search for rental items on Rentsy using natural language.
     This is the PRIMARY search tool. Use it for ANY rental search.
@@ -63,7 +95,8 @@ def search_rentals(query: str, location: Optional[str] = None, category: Optiona
     results = search_and_rank(params)
 
     if not results:
-        return f"""## No Items Found
+        return ui_result(
+            f"""## No Items Found
 
 I couldn't find any items matching "{query}" in **{loc}**.
 
@@ -73,7 +106,9 @@ I couldn't find any items matching "{query}" in **{loc}**.
 - Check a different location
 
 > 💡 *Rentsy has 4500+ items to hire. Tell me what you need!*
-"""
+""",
+            {"type": "empty", "message": f"No items matching '{query}' in {loc}"},
+        )
 
     output = [
         f"# 📦 Rentsy Rental Search Results",
@@ -106,12 +141,25 @@ I couldn't find any items matching "{query}" in **{loc}**.
         "> 💡 *Found what you need? Tell me which item you'd like to book!*",
     ])
 
-    return "\n".join(output)
+    structured_products = []
+    for product, score in results[:10]:
+        p = _to_structured_product(product)
+        p["score"] = int(score) if score else 0
+        structured_products.append(p)
+
+    return ui_result(
+        "\n".join(output),
+        {
+            "type": "product_list",
+            "title": f"Search: {query}",
+            "products": structured_products,
+        },
+    )
 
 
 @mcp.tool()
 @instrument_tool
-def get_product_details(slug: str) -> str:
+def get_product_details(slug: str) -> ToolResult:
     """
     Get detailed information about a specific rental item.
     
@@ -121,7 +169,10 @@ def get_product_details(slug: str) -> str:
     from src.utils.renderers import product_card as _product_card_svg
     product = get_product_by_slug(slug)
     if not product:
-        return f"Product '{slug}' not found. Please search for items first."
+        return ui_result(
+            f"Product '{slug}' not found. Please search for items first.",
+            {"type": "empty", "message": f"Product '{slug}' not found"},
+        )
 
     svg_uri = _product_card_svg(product)
 
@@ -193,12 +244,15 @@ def get_product_details(slug: str) -> str:
         "> 💡 *Ready to book? Let me know your name, email, event date and I'll submit the booking!*",
     ])
 
-    return "\n".join(lines)
+    return ui_result(
+        "\n".join(lines),
+        {"type": "product_detail", "product": _to_structured_product(product)},
+    )
 
 
 @mcp.tool()
 @instrument_tool
-def recommend_best_item(query: str, location: Optional[str] = None, category: Optional[str] = None) -> str:
+def recommend_best_item(query: str, location: Optional[str] = None, category: Optional[str] = None) -> ToolResult:
     """
     Get the single BEST rental item recommendation for your needs.
     Use this when someone asks "what's the best X for..."
@@ -209,7 +263,10 @@ def recommend_best_item(query: str, location: Optional[str] = None, category: Op
     result = find_best_product(params)
 
     if not result:
-        return f"I couldn't find a perfect match for '{query}' in {loc}. Try a broader search."
+        return ui_result(
+            f"I couldn't find a perfect match for '{query}' in {loc}. Try a broader search.",
+            {"type": "empty", "message": f"No match for '{query}' in {loc}"},
+        )
 
     from src.utils.renderers import product_card as _product_card_svg
     product, score, reasons = result
@@ -267,12 +324,21 @@ def recommend_best_item(query: str, location: Optional[str] = None, category: Op
         f"**Ready?** Tell me you'd like to book this and I'll help you reserve it!"
     ])
 
-    return "\n".join(lines)
+    return ui_result(
+        "\n".join(lines),
+        {
+            "type": "product_list",
+            "title": f"Best pick: {product.name}",
+            "products": [_to_structured_product(product) | {"score": int(score)}],
+            "rank": True,
+            "score": True,
+        },
+    )
 
 
 @mcp.tool()
 @instrument_tool
-def browse_by_category(category: str, location: Optional[str] = None, max_price: Optional[float] = None) -> str:
+def browse_by_category(category: str, location: Optional[str] = None, max_price: Optional[float] = None) -> ToolResult:
     """
     Browse rental items by category.
     
@@ -295,12 +361,15 @@ def browse_by_category(category: str, location: Optional[str] = None, max_price:
             "Office", "Experiences"
         ]
         cats_list = "\n".join([f"- {c}" for c in valid_cats])
-        return f"""No items found in "{category}" for {loc}.
+        return ui_result(
+            f"""No items found in "{category}" for {loc}.
 
 **Available categories:**
 {cats_list}
 
-Try a different category or location!"""
+Try a different category or location!""",
+            {"type": "empty", "message": f"No items in '{category}' for {loc}"},
+        )
 
     output = [
         f"# 📂 {category} Hire",
@@ -316,8 +385,17 @@ Try a different category or location!"""
         output.append(format_product_card(product, rank=i, score=score))
         output.append("")
 
-    lines = "\n".join(output)
-    return lines
+    return ui_result(
+        "\n".join(output),
+        {
+            "type": "product_list",
+            "title": f"{category} in {loc}",
+            "products": [
+                _to_structured_product(product) | {"score": int(score) if score else 0}
+                for product, score in results[:10]
+            ],
+        },
+    )
 
 
 @mcp.tool()
@@ -332,7 +410,7 @@ def book_rental(
     quantity: int = 1,
     delivery_option: str = "pickup",
     message: str = ""
-) -> str:
+) -> ToolResult:
     """
     Book a rental item. This creates a booking request and generates a reference code.
     
@@ -350,7 +428,10 @@ def book_rental(
     from src.utils.renderers import booking_confirmation as _booking_svg
     product = get_product_by_slug(product_slug)
     if not product:
-        return f"Product '{product_slug}' not found. Please search for items first."
+        return ui_result(
+            f"Product '{product_slug}' not found. Please search for items first.",
+            {"type": "empty", "message": f"Product '{product_slug}' not found"},
+        )
 
     duration_days = 1
     if "3 day" in timeframe:
@@ -425,17 +506,31 @@ def book_rental(
         f"> 🎉 *Your item is reserved! The store will confirm your booking shortly.*",
     ])
 
-    return "\n".join(lines)
+    return ui_result(
+        "\n".join(lines),
+        {
+            "type": "booking",
+            "ref": result.reference_code,
+            "product_name": product.name,
+            "store": product.store_name or "Rentsy Store",
+            "date": event_date,
+            "total": cost['total'],
+            "status": result.status,
+        },
+    )
 
 
 @mcp.tool()
 @instrument_tool
-def view_my_bookings() -> str:
+def view_my_bookings() -> ToolResult:
     """View all bookings made through this session."""
     bookings = get_bookings()
 
     if not bookings:
-        return "No bookings yet. Search for items and book something!"
+        return ui_result(
+            "No bookings yet. Search for items and book something!",
+            {"type": "empty", "message": "No bookings yet"},
+        )
 
     output = [
         f"# 📋 Your Bookings ({len(bookings)})",
@@ -453,12 +548,12 @@ def view_my_bookings() -> str:
     if len(bookings) > 10:
         output.append(f"> ...and {len(bookings) - 10} more bookings")
 
-    return "\n".join(output)
+    return ui_result("\n".join(output), {"type": "booking_list", "bookings": bookings[:10]})
 
 
 @mcp.tool()
 @instrument_tool
-def get_rental_cost_estimate(product_slug: str, quantity: int = 1, days: int = 1, include_delivery: bool = False) -> str:
+def get_rental_cost_estimate(product_slug: str, quantity: int = 1, days: int = 1, include_delivery: bool = False) -> ToolResult:
     """
     Get an instant cost estimate for renting an item.
     
@@ -470,7 +565,10 @@ def get_rental_cost_estimate(product_slug: str, quantity: int = 1, days: int = 1
     """
     product = get_product_by_slug(product_slug)
     if not product:
-        return f"Product '{product_slug}' not found."
+        return ui_result(
+            f"Product '{product_slug}' not found.",
+            {"type": "empty", "message": f"Product '{product_slug}' not found"},
+        )
 
     cost = calculate_rental_cost(
         product=product,
@@ -514,12 +612,12 @@ def get_rental_cost_estimate(product_slug: str, quantity: int = 1, days: int = 1
         f"🔗 **[Book this on Rentsy]({product.url})**",
     ])
 
-    return "\n".join(lines)
+    return ui_result("\n".join(lines), {"type": "cost_estimate", "total": cost['total'], "subtotal": cost['subtotal']})
 
 
 @mcp.tool()
 @instrument_tool
-def find_available_today(category: Optional[str] = None, location: Optional[str] = None) -> str:
+def find_available_today(category: Optional[str] = None, location: Optional[str] = None) -> ToolResult:
     """
     Find items available for immediate booking today.
     Perfect for last-minute needs.
@@ -539,7 +637,10 @@ def find_available_today(category: Optional[str] = None, location: Optional[str]
     results = search_and_rank(params)
 
     if not results:
-        return f"No items available today in {loc}. Try a different location or check back later."
+        return ui_result(
+            f"No items available today in {loc}. Try a different location or check back later.",
+            {"type": "empty", "message": f"No items available today in {loc}"},
+        )
 
     output = [
         f"# ⚡ Available Today: {loc}",
@@ -554,16 +655,27 @@ def find_available_today(category: Optional[str] = None, location: Optional[str]
         output.append("")
 
     output.append("\n> ⚡ *These items are in stock and ready to go!*")
-    return "\n".join(output)
+
+    return ui_result(
+        "\n".join(output),
+        {
+            "type": "product_list",
+            "title": f"Available Today in {loc}",
+            "products": [
+                _to_structured_product(product) | {"score": int(score) if score else 0}
+                for product, score in results[:10]
+            ],
+        },
+    )
 
 
 @mcp.tool()
 @instrument_tool
-def get_rentsy_stats() -> str:
+def get_rentsy_stats() -> ToolResult:
     """Get Rentsy marketplace statistics."""
     from src.utils.renderers import stats_dashboard
-    stats = get_stats()
-    svg_uri = stats_dashboard(stats)
+    stats_data = get_stats()
+    svg_uri = stats_dashboard(stats_data)
 
     lines = [
         f"![Rentsy Stats]({svg_uri})",
@@ -573,20 +685,23 @@ def get_rentsy_stats() -> str:
         "",
         "| | |",
         "| :--- | :--- |",
-        f"| 📦 Items | **{stats.get('products', 0)}** |",
-        f"| 🏪 Stores | **{stats.get('stores', 0)}** |",
-        f"| 📂 Categories | **{stats.get('categories', 0)}** |",
-        f"| 📩 Bookings | **{stats.get('bookings', 0)}** |",
+        f"| 📦 Items | **{stats_data.get('products', 0)}** |",
+        f"| 🏪 Stores | **{stats_data.get('stores', 0)}** |",
+        f"| 📂 Categories | **{stats_data.get('categories', 0)}** |",
+        f"| 📩 Bookings | **{stats_data.get('bookings', 0)}** |",
         "",
         "> *Australia's fastest growing rental platform!*",
     ]
 
-    return "\n".join(lines)
+    return ui_result(
+        "\n".join(lines),
+        {"type": "stats", "stats": stats_data},
+    )
 
 
 @mcp.tool()
 @instrument_tool
-def compare_items(slugs: List[str]) -> str:
+def compare_items(slugs: List[str]) -> ToolResult:
     """
     Compare multiple rental items side-by-side.
     
@@ -596,7 +711,10 @@ def compare_items(slugs: List[str]) -> str:
     from src.utils.renderers import comparison as _comparison_svg
     products = [get_product_by_slug(s) for s in slugs if get_product_by_slug(s)]
     if len(products) < 2:
-        return "Please provide at least 2 valid product slugs to compare."
+        return ui_result(
+            "Please provide at least 2 valid product slugs to compare.",
+            {"type": "empty", "message": "Need at least 2 products to compare"},
+        )
 
     svg_uri = _comparison_svg(products)
 
@@ -647,7 +765,13 @@ def compare_items(slugs: List[str]) -> str:
         f"**Ready to book?** [View on Rentsy]({winner.url})",
     ])
 
-    return "\n".join(lines)
+    return ui_result(
+        "\n".join(lines),
+        {
+            "type": "comparison",
+            "products": [_to_structured_product(p) for p in products],
+        },
+    )
 
 
 if __name__ == "__main__":

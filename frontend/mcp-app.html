@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rentsy</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:transparent;color:#404959;padding:0;min-height:auto}
+:root{--rose:#D42B65;--rose-light:#EE4E86;--rose-bg:#FFF0F5;--navy:#101B30;--navy-light:#283245;--text:#404959;--text-muted:#707683;--text-very-muted:#9FA4AC;--bg:#fff;--surface:#F4F5F7;--surface2:#F9F9F9;--border:#E7E8EA;--success:#22C55E;--success-bg:#F0FFF4;--blue:#3B82F6;--blue-bg:#EFF6FF;--star:#F59E0B}
+.c{max-width:580px;margin:0 auto;padding:4px 0}
+.card{background:var(--bg);border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:12px;box-shadow:0 2px 8px rgba(16,27,48,.06)}
+.card-inner{padding:16px}
+.accent-bar{height:4px;background:linear-gradient(90deg,var(--rose),var(--rose-light))}
+h1{font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:700;color:var(--navy)}
+h2{font-family:Georgia,'Times New Roman',serif;font-size:17px;font-weight:700;color:var(--navy);margin-bottom:12px}
+.p-name{font-family:Georgia,'Times New Roman',serif;font-size:18px;font-weight:700;color:var(--navy)}
+.p-store{font-size:13px;color:var(--text-muted);margin-top:2px}
+.p-loc{font-size:13px;color:var(--text);margin-top:4px}
+.p-price{font-size:20px;font-weight:700;color:var(--rose)}
+.p-unit{font-size:12px;color:var(--text-muted)}
+.p-row{display:flex;gap:14px;align-items:flex-start}
+.p-img{width:110px;height:110px;border-radius:10px;object-fit:cover;background:var(--surface);flex-shrink:0;border:1px solid var(--border)}
+.p-img-placeholder{width:110px;height:110px;border-radius:10px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--text-very-muted);flex-shrink:0}
+.p-details{flex:1;min-width:0}
+.p-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tag{display:inline-flex;align-items:center;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:500;white-space:nowrap}
+.tag-green{background:var(--success-bg);color:#15803D;border:1px solid #BBF7D0}
+.tag-blue{background:var(--blue-bg);color:#1D4ED8;border:1px solid #BFDBFE}
+.tag-gray{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.tag-rose{background:var(--rose-bg);color:var(--rose);border:1px solid #FBCFE8}
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:22px;padding:0 10px;border-radius:11px;background:var(--rose);color:#fff;font-size:11px;font-weight:600;margin-right:8px}
+.score{font-size:12px;color:var(--text-muted)}
+.score strong{color:var(--rose)}
+.score-bar{color:var(--rose);letter-spacing:2px}
+.view-link{display:block;text-align:right;font-size:12px;font-weight:600;color:var(--rose);padding:8px 16px 10px;text-decoration:none;border-top:1px solid var(--border)}
+.view-link:hover{color:var(--rose-light)}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px}
+.stat-card{background:var(--navy);border-radius:10px;padding:14px 8px;text-align:center}
+.stat-icon{font-size:18px;color:#fff;margin-bottom:4px}
+.stat-num{font-size:24px;font-weight:700;color:var(--rose);font-family:Georgia,'Times New Roman',serif}
+.stat-label{font-size:10px;color:var(--text-very-muted);letter-spacing:.5px;margin-top:2px;text-transform:uppercase}
+.booking-check{width:52px;height:52px;border-radius:50%;background:var(--success);display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.booking-check svg{width:26px;height:26px;stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.b-title{font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:700;color:var(--navy);text-align:center}
+.b-ref{text-align:center;font-size:13px;color:var(--text-muted);margin-bottom:12px}
+.b-ref strong{color:var(--rose)}
+.b-detail{display:flex;justify-content:space-between;padding:4px 0;font-size:13px}
+.b-detail-label{color:var(--text-muted)}
+.b-detail-value{color:var(--navy);font-weight:500}
+.b-divider{height:1px;background:var(--border);margin:8px 0}
+.b-total{font-size:22px;font-weight:700;color:var(--rose)}
+.b-status{display:inline-flex;padding:3px 14px;border-radius:12px;background:var(--success-bg);color:#15803D;font-size:12px;font-weight:600;border:1px solid #BBF7D0}
+.b-foot{text-align:center;font-size:11px;color:var(--text-very-muted);margin-top:12px;padding-top:8px;border-top:1px solid var(--border)}
+.nav-btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:opacity .15s;text-decoration:none}
+.btn:hover{opacity:.85}
+.btn-primary{background:var(--rose);color:#fff}
+.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.empty-state{text-align:center;padding:32px 16px;color:var(--text-muted)}
+.empty-state h2{font-family:Georgia,'Times New Roman',serif;font-size:20px;color:var(--navy);margin-bottom:6px}
+.empty-state p{font-size:14px}
+.loading{text-align:center;padding:32px;color:var(--text-muted)}
+.spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--rose);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.cmp-grid{display:grid;gap:8px;padding:12px}
+.cmp-header{text-align:center;background:var(--navy);color:#fff;padding:8px;border-radius:8px;font-size:11px;font-weight:600}
+.cmp-img{width:100%;aspect-ratio:1;border-radius:8px;object-fit:cover;background:var(--surface)}
+.cmp-img-empty{width:100%;aspect-ratio:1;border-radius:8px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--text-very-muted)}
+.cmp-price{text-align:center;font-size:14px;font-weight:700;color:var(--rose)}
+.cmp-unit{text-align:center;font-size:10px;color:var(--text-muted)}
+.cmp-stock{text-align:center;padding:3px 0;border-radius:10px;font-size:10px;font-weight:500}
+.cmp-loc{text-align:center;font-size:10px;color:var(--text-muted);margin-top:4px}
+.cmp-del{text-align:center;font-size:10px;color:var(--text-muted)}
+</style>
+</head>
+<body>
+<div id="app" class="c">
+  <div class="loading" id="loading-state">
+    <div class="spinner"></div>
+    <p>Loading Rentsy...</p>
+  </div>
+</div>
+<script>
+const APP = document.getElementById('app');
+let HOST = null;
+let SESSION = null;
+
+function post(type, payload = {}) {
+  if (!HOST) return;
+  HOST.postMessage({ type, ...payload, session: SESSION }, '*');
+}
+
+function render(html) {
+  APP.innerHTML = html;
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function tag(type, label) {
+  const cls = {stock:'tag-green',delivery:'tag-blue',pickup:'tag-gray',rose:'tag-rose'}[type]||'tag-gray';
+  return `<span class="tag ${cls}">${esc(label)}</span>`;
+}
+
+function renderProducts(data) {
+  const title = data.title || 'Search Results';
+  const products = data.products || [];
+  const score = data.score !== undefined;
+
+  if (!products.length) {
+    render(`
+      <div class="empty-state">
+        <div style="font-size:40px;margin-bottom:8px">🔍</div>
+        <h2>No items found</h2>
+        <p>Try a different category or search term</p>
+      </div>
+    `);
+    return;
+  }
+
+  let cards = products.map((p, i) => {
+    const rank = data.rank ? (i + 1) : null;
+    const rankHtml = rank ? `<span class="rank-badge">#${rank}</span>` : '';
+    const scoreHtml = (score && p.score) ? `<span class="score">${'●'.repeat(Math.min(10,Math.max(0,Math.floor(p.score/10))))}${'○'.repeat(10-Math.min(10,Math.max(0,Math.floor(p.score/10))))} <strong>${p.score}/100</strong></span>` : '';
+    const tagsHtml = [];
+    if (p.stock > 0) tagsHtml.push(tag('stock', `In Stock ${p.stock}`));
+    if (p.delivery) tagsHtml.push(tag('delivery', 'Delivery avail.'));
+    if (p.pickup) tagsHtml.push(tag('pickup', 'Pickup'));
+    const imgHtml = p.image
+      ? `<img class="p-img" src="${esc(p.image)}" alt="${esc(p.name)}" onerror="this.parentNode.innerHTML='<div class=\\'p-img-placeholder\\'>📦</div>'">`
+      : `<div class="p-img-placeholder">📦</div>`;
+    const stars = '★'.repeat(4) + '☆';
+    return `
+      <div class="card">
+        <div class="accent-bar"></div>
+        <div class="card-inner">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            ${rankHtml}${scoreHtml}
+          </div>
+          <div class="p-row">
+            ${imgHtml}
+            <div class="p-details">
+              <div class="p-name">${esc(p.name)}</div>
+              ${p.store ? `<div class="p-store">${esc(p.store)} <span style="color:var(--star)">${stars}</span></div>` : ''}
+              <div class="p-loc">📍 ${esc(p.location || 'Gold Coast')}</div>
+              <div style="margin-top:6px">
+                ${p.price ? `<span class="p-price">${esc(p.price)}</span> <span class="p-unit">/ ${esc(p.unit || 'day')}</span>` : ''}
+              </div>
+              ${tagsHtml.length ? `<div class="p-tags">${tagsHtml.join('')}</div>` : ''}
+            </div>
+          </div>
+        </div>
+        ${p.url ? `<a class="view-link" href="${esc(p.url)}" target="_blank">🔗  View on Rentsy →</a>` : ''}
+      </div>`;
+  }).join('');
+
+  render(`
+    <h2 style="margin-bottom:10px;padding:0 4px">${esc(title)}</h2>
+    <p style="font-size:13px;color:var(--text-muted);margin:-6px 0 10px;padding:0 4px">${products.length} items found</p>
+    ${cards}
+  `);
+}
+
+function renderStats(data) {
+  const s = data.stats || {};
+  render(`
+    <h2 style="padding:4px 4px 0">Rentsy Marketplace</h2>
+    <div class="stat-grid">
+      ${[['📦',s.products,'Rental Items'],['🏪',s.stores,'Rental Stores'],['📂',s.categories,'Categories'],['📩',s.bookings,'Bookings']].map(([icon,val,label]) =>
+        `<div class="stat-card"><div class="stat-icon">${icon}</div><div class="stat-num">${(val||0).toLocaleString()}</div><div class="stat-label">${label}</div></div>`
+      ).join('')}
+    </div>
+    <div style="text-align:center;padding:4px 12px 8px;font-size:11px;color:var(--text-very-muted)">Australia's fastest growing rental platform</div>
+  `);
+}
+
+function renderBooking(data) {
+  const b = data.booking || data;
+  render(`
+    <div class="card">
+      <div class="accent-bar"></div>
+      <div class="card-inner" style="text-align:center">
+        <div class="booking-check"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg></div>
+        <div class="b-title">Booking Confirmed!</div>
+        <div class="b-ref">Reference: <strong>${esc(b.ref||'')}</strong></div>
+        <div class="b-divider"></div>
+        ${[['Item',b.product_name],['Store',b.store],['Event Date',b.date]].map(([l,v]) =>
+          `<div class="b-detail"><span class="b-detail-label">${l}</span><span class="b-detail-value">${esc(v||'')}</span></div>`
+        ).join('')}
+        <div class="b-divider"></div>
+        <div class="b-detail"><span class="b-detail-label">Total</span><span class="b-total">$${(b.total||0).toFixed(2)}</span></div>
+        <div class="b-detail" style="margin-top:4px">
+          <span class="b-detail-label">Status</span>
+          <span class="b-status">${esc(b.status||'submitted')} ✓</span>
+        </div>
+        <div class="b-foot">You'll only be charged once the provider confirms</div>
+      </div>
+    </div>
+  `);
+}
+
+function renderComparison(data) {
+  const prods = data.products || [];
+  if (!prods.length) { render(`<div class="empty-state"><p>No items to compare</p></div>`); return; }
+  const n = prods.length;
+  const cols = Math.min(n, 4);
+  render(`
+    <div class="card">
+      <div class="accent-bar"></div>
+      <div class="card-inner">
+        <h2>Compare Items</h2>
+        <div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:8px">
+          ${prods.slice(0,cols).map(p => {
+            const img = p.image ? `<img class="cmp-img" src="${esc(p.image)}" onerror="this.parentNode.innerHTML='<div class=\\'cmp-img-empty\\'>📦</div>'">` : `<div class="cmp-img-empty">📦</div>`;
+            return `<div>${img}<div class="cmp-price" style="margin-top:6px">${esc(p.price||'--')}</div><div class="cmp-unit">${esc(p.unit||'')}</div><div style="margin-top:4px;padding:2px 0;border-radius:10px;text-align:center;font-size:10px;font-weight:500;background:${p.stock>0?'var(--success-bg)':'var(--surface)'};color:${p.stock>0?'#15803D':'var(--text-very-muted)'}">${p.stock>0?p.stock+' in stock':'Out of stock'}</div><div class="cmp-loc">${esc(p.location||'')}</div><div class="cmp-del">${p.delivery?'✅ Delivery':'❌ No delivery'}</div></div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  `);
+}
+
+function renderError(msg) {
+  render(`
+    <div class="empty-state">
+      <div style="font-size:40px;margin-bottom:8px">⚠️</div>
+      <h2>Something went wrong</h2>
+      <p>${esc(msg||'Please try again')}</p>
+    </div>
+  `);
+}
+
+function renderEmpty(msg) {
+  render(`
+    <div class="empty-state">
+      <div style="font-size:40px;margin-bottom:8px">🔍</div>
+      <h2>No results</h2>
+      <p>${esc(msg||'Try a different search')}</p>
+    </div>
+  `);
+}
+
+function handleResult(data) {
+  const sc = data.structuredContent;
+  if (!sc) return;
+  switch(sc.type) {
+    case 'product_list': renderProducts(sc); break;
+    case 'stats': renderStats(sc); break;
+    case 'booking': renderBooking(sc); break;
+    case 'comparison': renderComparison(sc); break;
+    case 'error': renderError(sc.message); break;
+    case 'empty': renderEmpty(sc.message); break;
+    default: renderProducts(sc);
+  }
+}
+
+window.addEventListener('message', (e) => {
+  const msg = e.data;
+  if (!msg || !msg.type) return;
+
+  switch(msg.type) {
+    case 'app/initialize':
+      HOST = e.source;
+      SESSION = msg.session;
+      post('app/ready');
+      render(`
+        <div class="empty-state" style="padding:16px">
+          <p style="color:var(--text-muted);font-size:14px">Ask me to search rentals on Rentsy!</p>
+        </div>
+      `);
+      break;
+    case 'app/ontoolresult':
+      handleResult(msg);
+      break;
+    case 'app/onhostcontextchanged':
+      break;
+  }
+});
+
+post('app/ready');
+</script>
+</body>
+</html>
