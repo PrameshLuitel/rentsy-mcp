@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate natural-looking commits (3-21 per run, spread across ~8h)."""
+"""Generate natural-looking commits (0-21 per run, clustered or spread based on volume)."""
 import os, random, datetime, subprocess
 
 REPO = os.path.expanduser('~/rentsy-mcp')
@@ -7,8 +7,29 @@ os.chdir(REPO)
 
 subprocess.run(['git', 'pull', '--rebase'], capture_output=True)
 
-COMMITS = random.randint(3, 21)
-base_hour = 8
+COMMITS = random.randint(0, 21)
+
+if COMMITS == 0:
+    print(f'Skipping {datetime.date.today()} — 0 commits today')
+    exit(0)
+
+# Spread pattern: many commits → spread wide, few → cluster tight
+if COMMITS <= 3:
+    # Cluster within 1 hour
+    span_minutes = 60
+elif COMMITS <= 7:
+    # Within 3 hours
+    span_minutes = 180
+elif COMMITS <= 12:
+    # Within 5 hours
+    span_minutes = 300
+else:
+    # Spread across 8 hours
+    span_minutes = 480
+
+start_minute = random.randint(60, 240)  # start between 9am and 1pm
+timestamps = sorted(random.sample(range(start_minute, start_minute + span_minutes), COMMITS))
+
 commit_messages = [
     "chore: update activity heartbeat",
     "chore: automated data refresh",
@@ -520,17 +541,16 @@ commit_messages = [
     "chore: maintenance operation state",
 ]
 
-for i in range(COMMITS):
-    offset_hours = (i * random.randint(20, 50)) // 60
-    hour = base_hour + offset_hours
-    minute = random.randint(0, 59)
+for i, ts_minutes in enumerate(timestamps):
+    hour = ts_minutes // 60
+    minute = ts_minutes % 60
     second = random.randint(0, 59)
     today = datetime.date.today()
     ts = datetime.datetime(today.year, today.month, today.day, hour, minute, second)
     date_str = ts.strftime('%Y-%m-%d %H:%M:%S')
 
     with open(os.path.join(REPO, 'scripts', '.heartbeat'), 'a') as f:
-        f.write(f'{ts.isoformat()} | commit-{i+1} | seed={random.getrandbits(16)}\n')
+        f.write(f'{ts.isoformat()} | commit-{i+1}/{COMMITS} | seed={random.getrandbits(16)}\n')
 
     subprocess.run(['git', 'add', 'scripts/.heartbeat'], capture_output=True)
     msg = random.choice(commit_messages)
