@@ -336,7 +336,12 @@ def health():
 
 FRONTEND_DIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "frontend", "dist")
 
+print(f"[Rentsy] Frontend dist path: {FRONTEND_DIST}")
+print(f"[Rentsy] Frontend dist exists: {os.path.isdir(FRONTEND_DIST)}")
+print(f"[Rentsy] Frontend index.html exists: {os.path.isfile(os.path.join(FRONTEND_DIST, 'index.html'))}")
+
 if os.path.isdir(FRONTEND_DIST) and os.path.isfile(os.path.join(FRONTEND_DIST, "index.html")):
+    print("[Rentsy] ✅ Serving frontend from", FRONTEND_DIST)
     from fastapi.staticfiles import StaticFiles
     from fastapi.responses import FileResponse, JSONResponse
     from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -344,6 +349,7 @@ if os.path.isdir(FRONTEND_DIST) and os.path.isfile(os.path.join(FRONTEND_DIST, "
     assets_dir = os.path.join(FRONTEND_DIST, "assets")
     if os.path.isdir(assets_dir):
         app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+        print("[Rentsy] ✅ Mounted /assets from", assets_dir)
 
     @app.exception_handler(StarletteHTTPException)
     async def spa_fallback(request, exc):
@@ -357,36 +363,44 @@ if os.path.isdir(FRONTEND_DIST) and os.path.isfile(os.path.join(FRONTEND_DIST, "
     async def serve_frontend():
         return FileResponse(os.path.join(FRONTEND_DIST, "index.html"))
 else:
+    print("[Rentsy] ⚠️ Frontend not built, serving landing page")
     @app.get("/")
     async def root_landing():
         from fastapi.responses import HTMLResponse
-        return HTMLResponse(f"""
-        <html>
-        <head>
-            <title>Rentsy MCP Server</title>
-            <style>
-                body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0a0a0f; color: #eee; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }}
-                .card {{ background: #12121a; border: 1px solid #2a2a3a; border-radius: 16px; padding: 40px; max-width: 500px; text-align: center; }}
-                h1 {{ background: linear-gradient(135deg, #ff6b9d, #ff8e53); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
-                a {{ color: #ff6b9d; }}
-                .links {{ margin-top: 24px; }}
-                .links a {{ display: block; padding: 8px; }}
-            </style>
-        </head>
-        <body>
-            <div class="card">
-                <h1>Rentsy MCP Server</h1>
-                <p>Australia's rental marketplace API & MCP server</p>
-                <div class="links">
-                    <a href="/dashboard">📊 Dashboard</a>
-                    <a href="/health">💚 Health Check</a>
-                    <a href="/mcp/sse">🔌 MCP SSE Endpoint</a>
-                    <a href="/api/stats">📈 API Stats</a>
-                </div>
-            </div>
-        </body>
-        </html>
-        """)
+        return HTMLResponse(f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rentsy MCP Server</title>
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f9f9f9; color: #101B30; display: flex; align-items: center; justify-content: center; min-height: 100vh; }}
+        .card {{ background: white; border: 1px solid #E7E8EA; border-radius: 16px; padding: 48px; max-width: 480px; text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }}
+        h1 {{ font-size: 28px; color: #D42B65; margin-bottom: 8px; }}
+        p {{ color: #707683; margin-bottom: 24px; font-size: 14px; }}
+        .links {{ display: flex; flex-direction: column; gap: 8px; }}
+        .links a {{ display: block; padding: 12px 20px; border-radius: 12px; background: #F4F5F7; color: #101B30; text-decoration: none; font-size: 14px; font-weight: 500; transition: background 0.2s; }}
+        .links a:hover {{ background: #E7E8EA; }}
+        .logo {{ width: 40px; height: 40px; margin: 0 auto 16px; background: #D42B65; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: white; }}
+        .badge {{ display: inline-block; padding: 4px 12px; background: #FBEAF0; color: #D42B65; border-radius: 999px; font-size: 11px; font-weight: 600; margin-bottom: 16px; }}
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo">🏠</div>
+        <span class="badge">Rentsy MCP</span>
+        <h1>Rentsy Marketplace</h1>
+        <p>Australia's rental marketplace API — frontend is being built.</p>
+        <div class="links">
+            <a href="/dashboard">📊 Dashboard</a>
+            <a href="/mcp/sse">🔌 MCP SSE Endpoint</a>
+            <a href="/api/stats">📈 API Stats</a>
+            <a href="/health">💚 Health</a>
+        </div>
+    </div>
+</body>
+</html>""")
 
 
 if __name__ == "__main__":
