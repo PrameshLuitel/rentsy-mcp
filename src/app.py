@@ -243,9 +243,9 @@ async def dashboard():
         ts = call.get('timestamp', '').replace('T', ' ')[:19]
         call_rows += f"""
         <tr>
-            <td style="color: #ff6b9d; font-weight: bold;">{call.get('tool_name')}</td>
-            <td><pre style="font-size: 10px; color: #aaa; margin: 0;">{args_str}</pre></td>
-            <td style="font-size: 11px; color: #888;">{ts}</td>
+            <td class="cell-tool">{call.get('tool_name')}</td>
+            <td><pre>{args_str}</pre></td>
+            <td class="cell-ts">{ts}</td>
         </tr>
         """
 
@@ -254,58 +254,77 @@ async def dashboard():
     <html>
         <head>
             <title>Rentsy Intelligence Dashboard</title>
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
             <style>
-                body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0a0a0f; color: #eee; margin: 0; padding: 40px; }}
-                .grid {{ display: grid; grid-template-columns: 300px 1fr; gap: 30px; max-width: 1400px; margin: 0 auto; }}
-                .card {{ background: #12121a; border: 1px solid #2a2a3a; border-radius: 16px; padding: 24px; }}
-                h1, h2, h3 {{ margin-top: 0; color: #fff; }}
-                .stat-grid {{ display: grid; grid-template-columns: 1fr; gap: 15px; }}
-                .stat-card {{ background: #1a1a25; padding: 15px; border-radius: 12px; border-left: 4px solid #ff6b9d; }}
-                .stat-val {{ font-size: 28px; font-weight: bold; color: #ff6b9d; }}
-                .stat-label {{ font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; }}
-                table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
-                th {{ text-align: left; padding: 12px; color: #888; font-size: 12px; text-transform: uppercase; border-bottom: 1px solid #2a2a3a; }}
-                td {{ padding: 16px 12px; border-bottom: 1px solid #1a1a25; vertical-align: top; }}
-                pre {{ white-space: pre-wrap; word-break: break-all; }}
-                .tag {{ display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; background: #2a2a3a; }}
-                .header {{ display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto 40px; }}
-                .logo {{ font-size: 24px; font-weight: bold; background: linear-gradient(to right, #ff6b9d, #ff8e53); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
-                .gradient-text {{ background: linear-gradient(to right, #ff6b9d, #ff8e53); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
+                * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+                body {{ font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #faf9f5; color: #3d3d3a; margin: 0; padding: 40px; -webkit-font-smoothing: antialiased; }}
+                .max {{ max-width: 1200px; margin: 0 auto; }}
+                .header {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 48px; }}
+                .logo {{ display: flex; align-items: center; gap: 8px; }}
+                .logo-icon {{ width: 28px; height: 28px; border: 2.5px solid #cc785c; border-radius: 50%; display: flex; align-items: center; justify-content: center; }}
+                .logo-icon svg {{ width: 16px; height: 16px; }}
+                .logo-icon svg line {{ stroke: #cc785c; stroke-width: 2.5; stroke-linecap: round; }}
+                .logo-text {{ font-family: 'Cormorant Garamond', Georgia, serif; font-size: 24px; font-weight: 500; color: #141413; letter-spacing: -0.02em; }}
+                .tag {{ display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 9999px; background: #efe9de; color: #141413; font-size: 12px; font-weight: 500; letter-spacing: 0.5px; }}
+                .tag::before {{ content: ''; width: 6px; height: 6px; border-radius: 50%; background: #5db872; margin-right: 6px; }}
+                .grid {{ display: grid; grid-template-columns: 280px 1fr; gap: 24px; }}
+                .card-dark {{ background: #181715; border-radius: 12px; padding: 24px; }}
+                .card-dark-elevated {{ background: #252320; border-radius: 12px; padding: 20px; }}
+                h2 {{ font-family: 'Cormorant Garamond', Georgia, serif; font-size: 20px; font-weight: 500; color: #faf9f5; margin-bottom: 20px; letter-spacing: -0.02em; }}
+                h3 {{ font-family: 'Cormorant Garamond', Georgia, serif; font-size: 22px; font-weight: 500; color: #faf9f5; margin-bottom: 8px; letter-spacing: -0.02em; }}
+                .stats {{ display: flex; flex-direction: column; gap: 12px; }}
+                .stat {{ padding: 16px; border-radius: 8px; background: #252320; }}
+                .stat-val {{ font-family: 'Cormorant Garamond', Georgia, serif; font-size: 28px; font-weight: 500; color: #cc785c; letter-spacing: -0.02em; }}
+                .stat-label {{ font-size: 11px; color: #a09d96; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 500; margin-top: 2px; }}
+                table {{ width: 100%; border-collapse: collapse; margin-top: 16px; }}
+                th {{ text-align: left; padding: 10px 12px; color: #a09d96; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 1px solid #252320; }}
+                td {{ padding: 14px 12px; border-bottom: 1px solid #252320; vertical-align: top; font-size: 13px; color: #faf9f5; }}
+                .cell-tool {{ color: #cc785c; font-weight: 500; }}
+                .cell-ts {{ color: #a09d96; font-size: 12px; white-space: nowrap; }}
+                pre {{ white-space: pre-wrap; word-break: break-all; font-family: 'Inter', monospace; font-size: 11px; color: #a09d96; margin: 0; line-height: 1.5; }}
+                .empty {{ text-align: center; padding: 48px 0; color: #a09d96; font-size: 14px; }}
+                .sub {{ font-size: 13px; color: #a09d96; margin-bottom: 4px; }}
+                @@media (max-width: 768px) {{ .grid {{ grid-template-columns: 1fr; }} body {{ padding: 20px; }} .header {{ flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 32px; }} }}
             </style>
         </head>
         <body>
-            <div class="header">
-                <div class="logo">Rentsy Marketplace Intelligence</div>
-                <div class="tag">Live: {datetime.utcnow().strftime('%Y-%m-%d %H:%M')} UTC</div>
-            </div>
-            <div class="grid">
-                <div class="sidebar">
-                    <div class="card">
-                        <h3>Market Reach</h3>
-                        <div class="stat-grid">
-                            <div class="stat-card">
+            <div class="max">
+                <div class="header">
+                    <div class="logo">
+                        <div class="logo-icon">
+                            <svg viewBox="0 0 24 24"><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>
+                        </div>
+                        <span class="logo-text">Rentsy Intelligence</span>
+                    </div>
+                    <div class="tag">{datetime.utcnow().strftime('%Y-%m-%d %H:%M')} UTC</div>
+                </div>
+                <div class="grid">
+                    <div class="card-dark">
+                        <h2>Market Reach</h2>
+                        <div class="stats">
+                            <div class="stat">
                                 <div class="stat-val">{stats.get('products', 0)}</div>
                                 <div class="stat-label">Rental Items</div>
                             </div>
-                            <div class="stat-card">
+                            <div class="stat">
                                 <div class="stat-val">{stats.get('stores', 0)}</div>
                                 <div class="stat-label">Rental Stores</div>
                             </div>
-                            <div class="stat-card">
+                            <div class="stat">
                                 <div class="stat-val">{stats.get('categories', 0)}</div>
                                 <div class="stat-label">Categories</div>
                             </div>
-                            <div class="stat-card" style="border-left-color: #ff8e53;">
+                            <div class="stat">
                                 <div class="stat-val">{stats.get('bookings', 0)}</div>
                                 <div class="stat-label">Bookings Generated</div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="main">
-                    <div class="card">
+                    <div class="card-dark">
                         <h3>Recent AI Interactions</h3>
-                        <p style="color: #666; font-size: 14px;">Real-time tracking of what users are searching for via AI assistants.</p>
+                        <div class="sub">Real-time tracking of what users are searching for via AI assistants.</div>
                         <table>
                             <thead>
                                 <tr>
@@ -315,7 +334,7 @@ async def dashboard():
                                 </tr>
                             </thead>
                             <tbody>
-                                {call_rows if call_rows else '<tr><td colspan="3" style="text-align:center; padding: 40px; color: #444;">No tool calls yet. Connect Claude to start!</td></tr>'}
+                                {call_rows if call_rows else '<tr><td class="empty" colspan="3">No tool calls yet. Connect Claude to start!</td></tr>'}
                             </tbody>
                         </table>
                     </div>
