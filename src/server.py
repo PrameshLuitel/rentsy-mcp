@@ -3,6 +3,7 @@ import os
 from typing import Optional, List
 from fastmcp import FastMCP
 from fastmcp.tools.base import ToolResult
+from fastmcp.apps import AppConfig, ResourceCSP
 from src.db.models import SearchParams, BookingPayload
 from src.db.queries import (
     search_products,
@@ -25,7 +26,14 @@ import json
 mcp = FastMCP("Rentsy Marketplace")
 
 
-@mcp.resource(uri="ui://rentsy/cards", name="Rentsy MCP App", description="Interactive rental marketplace UI", app=True)
+@mcp.resource(
+    uri="ui://rentsy/cards",
+    name="Rentsy MCP App",
+    description="Interactive rental marketplace UI",
+    app=AppConfig(
+        csp=ResourceCSP(resource_domains=["https://unpkg.com"]),
+    ),
+)
 def get_mcp_app() -> str:
     path = os.path.join(os.path.dirname(__file__), "..", "frontend", "mcp-app.html")
     with open(path) as f:
@@ -69,7 +77,7 @@ def instrument_tool(func):
     return wrapper
 
 
-@mcp.tool(app={"resourceUri": "ui://rentsy/cards"})
+@mcp.tool(app={"resourceUri": "ui://rentsy/cards"}, meta={"ui/resourceUri": "ui://rentsy/cards"})
 @instrument_tool
 def search_rentals(query: str, location: Optional[str] = None, category: Optional[str] = None, max_price: Optional[float] = None) -> ToolResult:
     """
@@ -157,7 +165,7 @@ I couldn't find any items matching "{query}" in **{loc}**.
     )
 
 
-@mcp.tool(app={"resourceUri": "ui://rentsy/cards"})
+@mcp.tool(app={"resourceUri": "ui://rentsy/cards"}, meta={"ui/resourceUri": "ui://rentsy/cards"})
 @instrument_tool
 def get_product_details(slug: str) -> ToolResult:
     """
@@ -250,7 +258,7 @@ def get_product_details(slug: str) -> ToolResult:
     )
 
 
-@mcp.tool(app={"resourceUri": "ui://rentsy/cards"})
+@mcp.tool(app={"resourceUri": "ui://rentsy/cards"}, meta={"ui/resourceUri": "ui://rentsy/cards"})
 @instrument_tool
 def recommend_best_item(query: str, location: Optional[str] = None, category: Optional[str] = None) -> ToolResult:
     """
@@ -336,7 +344,7 @@ def recommend_best_item(query: str, location: Optional[str] = None, category: Op
     )
 
 
-@mcp.tool(app={"resourceUri": "ui://rentsy/cards"})
+@mcp.tool(app={"resourceUri": "ui://rentsy/cards"}, meta={"ui/resourceUri": "ui://rentsy/cards"})
 @instrument_tool
 def browse_by_category(category: str, location: Optional[str] = None, max_price: Optional[float] = None) -> ToolResult:
     """
@@ -398,7 +406,7 @@ Try a different category or location!""",
     )
 
 
-@mcp.tool(app={"resourceUri": "ui://rentsy/cards"})
+@mcp.tool(app={"resourceUri": "ui://rentsy/cards"}, meta={"ui/resourceUri": "ui://rentsy/cards"})
 @instrument_tool
 def book_rental(
     product_slug: str,
@@ -520,7 +528,7 @@ def book_rental(
     )
 
 
-@mcp.tool(app={"resourceUri": "ui://rentsy/cards"})
+@mcp.tool(app={"resourceUri": "ui://rentsy/cards"}, meta={"ui/resourceUri": "ui://rentsy/cards"})
 @instrument_tool
 def view_my_bookings() -> ToolResult:
     """View all bookings made through this session."""
@@ -551,7 +559,7 @@ def view_my_bookings() -> ToolResult:
     return ui_result("\n".join(output), {"type": "booking_list", "bookings": bookings[:10]})
 
 
-@mcp.tool(app={"resourceUri": "ui://rentsy/cards"})
+@mcp.tool(app={"resourceUri": "ui://rentsy/cards"}, meta={"ui/resourceUri": "ui://rentsy/cards"})
 @instrument_tool
 def get_rental_cost_estimate(product_slug: str, quantity: int = 1, days: int = 1, include_delivery: bool = False) -> ToolResult:
     """
@@ -615,7 +623,7 @@ def get_rental_cost_estimate(product_slug: str, quantity: int = 1, days: int = 1
     return ui_result("\n".join(lines), {"type": "cost_estimate", "total": cost['total'], "subtotal": cost['subtotal']})
 
 
-@mcp.tool(app={"resourceUri": "ui://rentsy/cards"})
+@mcp.tool(app={"resourceUri": "ui://rentsy/cards"}, meta={"ui/resourceUri": "ui://rentsy/cards"})
 @instrument_tool
 def find_available_today(category: Optional[str] = None, location: Optional[str] = None) -> ToolResult:
     """
@@ -669,7 +677,7 @@ def find_available_today(category: Optional[str] = None, location: Optional[str]
     )
 
 
-@mcp.tool(app={"resourceUri": "ui://rentsy/cards"})
+@mcp.tool(app={"resourceUri": "ui://rentsy/cards"}, meta={"ui/resourceUri": "ui://rentsy/cards"})
 @instrument_tool
 def get_rentsy_stats() -> ToolResult:
     """Get Rentsy marketplace statistics."""
@@ -699,7 +707,7 @@ def get_rentsy_stats() -> ToolResult:
     )
 
 
-@mcp.tool(app={"resourceUri": "ui://rentsy/cards"})
+@mcp.tool(app={"resourceUri": "ui://rentsy/cards"}, meta={"ui/resourceUri": "ui://rentsy/cards"})
 @instrument_tool
 def compare_items(slugs: List[str]) -> ToolResult:
     """
