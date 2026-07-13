@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
 
 COPY src/ src/
 COPY frontend/dist/ frontend/dist/
+COPY frontend/mcp-app.html frontend/mcp-app.html
 
 ENV PYTHONUNBUFFERED=1
 ENV PORT=10000
