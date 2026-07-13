@@ -1,119 +1,98 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { X, ChevronDown, ChevronUp } from 'lucide-react'
-import gsap from 'gsap'
 import { getProduct } from '../api'
 
-const IMG_BASE = 'https://s3.us-east-2.amazonaws.com/website.rentsy/uploads/product_images/cropped'
+const B = 'https://s3.us-east-2.amazonaws.com/website.rentsy/uploads/product_images/cropped'
+function img(p) { return p.image_url ? p.image_url : p.image ? `${B}/${p.image}` : null }
 
-function imageUrl(product) {
-  if (product.image_url) return product.image_url
-  if (product.image) return `${IMG_BASE}/${product.image}`
-  return null
+const T = {
+  canvas: '#faf9f5',
+  surfaceCard: '#efe9de',
+  surfaceSoft: '#f5f0e8',
+  primary: '#cc785c',
+  ink: '#141413',
+  body: '#3d3d3a',
+  muted: '#6c6a64',
+  mutedSoft: '#8e8b82',
+  hairline: '#e6dfd8',
 }
 
 export default function ProductModal({ product, onClose, onBook }) {
-  const [fullProduct, setFullProduct] = useState(product)
-  const [loading, setLoading] = useState(false)
-  const [showMore, setShowMore] = useState(false)
-  const cardRef = useRef(null)
-  const img = imageUrl(fullProduct)
-
-  useEffect(() => {
-    if (cardRef.current) {
-      gsap.fromTo(cardRef.current, { y: 30, opacity: 0, scale: 0.97 }, { y: 0, opacity: 1, scale: 1, duration: 0.3, ease: 'power3.out' })
-    }
-  }, [])
+  const [fp, setFp] = useState(product)
+  const [more, setMore] = useState(false)
+  const r = useRef(null)
+  const i = img(fp)
 
   useEffect(() => {
     if (product.id && !product.description) {
-      setLoading(true)
-      getProduct(product.id).then((d) => { if (d) setFullProduct(d) }).catch(() => {}).finally(() => setLoading(false))
+      getProduct(product.id).then(d => { if (d) setFp(d) }).catch(() => {})
     }
   }, [product.id])
 
-  const handleClose = () => {
-    if (cardRef.current) {
-      gsap.to(cardRef.current, { y: 20, opacity: 0, scale: 0.97, duration: 0.15, ease: 'power2.in', onComplete: onClose })
-    } else { onClose() }
-  }
-
-  const price = fullProduct.price_per_day ?? fullProduct.price
-  const weekly = fullProduct.price_per_week ?? (price ? price * 5 : null)
-  const deposit = fullProduct.deposit
+  const price = fp.price_per_day ?? fp.price
+  const weekly = fp.price_per_week ?? (price ? price * 5 : null)
 
   return (
-    <div className="modal-overlay" onClick={handleClose}>
-      <div ref={cardRef} className="modal-card max-w-[640px]" onClick={(e) => e.stopPropagation()}>
-        <div className="relative">
-          <div className="aspect-video bg-[#F4F5F7]">
-            {img ? <img src={img} alt={fullProduct.name} className="w-full h-full object-cover" /> : (
-              <div className="w-full h-full flex items-center justify-center text-5xl">📦</div>
-            )}
-          </div>
-          <button onClick={handleClose} className="absolute top-3 left-3 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors">
-            <X className="w-4 h-4 text-[#101B30]" />
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: 'rgba(20,20,19,0.45)' }} onClick={onClose}>
+      <div ref={r} style={{ position: 'relative', background: T.canvas, borderRadius: 16, maxHeight: '90vh', overflowY: 'auto', width: '100%', maxWidth: 600, boxShadow: '0 4px 24px rgba(20,20,19,0.12)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ position: 'relative', aspectRatio: '16/9', background: T.surfaceCard }}>
+          {i ? <img src={i} alt={fp.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48, color: T.muted }}>📦</div>}
+          <button onClick={onClose} style={{ position: 'absolute', top: 12, left: 12, width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.85)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.ink} strokeWidth="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
           </button>
-          {fullProduct.free_delivery && (
-            <span className="absolute top-3 right-3 text-xs font-semibold bg-white/90 text-[#101B30] px-3 py-1 rounded-[8px] shadow-sm">Free Delivery</span>
-          )}
         </div>
+        <div style={{ padding: 24 }}>
+          <h2 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 22, fontWeight: 500, color: T.ink, margin: '0 0 4px', letterSpacing: '-0.02em' }}>{fp.name}</h2>
+          <p style={{ fontSize: 14, color: T.muted, margin: '0 0 20px', fontFamily: 'Inter, sans-serif' }}>{fp.store_name} · {fp.location || 'Gold Coast'}</p>
 
-        <div className="p-5">
-          <h2 className="text-lg font-bold text-[#101B30] mb-1">{fullProduct.name}</h2>
-          <p className="text-sm text-[#707683] mb-3">{fullProduct.store_name} · {fullProduct.location || `${fullProduct.location_suburb || ''} ${fullProduct.location_city || ''}`.trim() || 'Gold Coast'}</p>
-
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
             {price && (
-              <div className="bg-[#F4F5F7] rounded-[12px] px-4 py-2.5 text-center min-w-[90px]">
-                <div className="text-base font-bold text-[#D42B65]">${price}</div>
-                <div className="text-[10px] text-[#707683] uppercase tracking-wider">Per {method}</div>
+              <div style={{ background: T.surfaceSoft, borderRadius: 12, padding: '10px 16px', textAlign: 'center', minWidth: 90 }}>
+                <div style={{ fontSize: 16, fontWeight: 500, color: T.primary, fontFamily: 'Inter, sans-serif' }}>${price}</div>
+                <div style={{ fontSize: 10, color: T.mutedSoft, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 500, fontFamily: 'Inter, sans-serif' }}>Per {(fp.price_method || 'day').replace(/_/g, ' ')}</div>
               </div>
             )}
             {weekly && (
-              <div className="bg-[#F4F5F7] rounded-[12px] px-4 py-2.5 text-center min-w-[90px]">
-                <div className="text-base font-bold text-[#D42B65]">${weekly}</div>
-                <div className="text-[10px] text-[#707683] uppercase tracking-wider">Per week</div>
+              <div style={{ background: T.surfaceSoft, borderRadius: 12, padding: '10px 16px', textAlign: 'center', minWidth: 90 }}>
+                <div style={{ fontSize: 16, fontWeight: 500, color: T.primary, fontFamily: 'Inter, sans-serif' }}>${weekly}</div>
+                <div style={{ fontSize: 10, color: T.mutedSoft, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 500, fontFamily: 'Inter, sans-serif' }}>Per week</div>
               </div>
             )}
-            {deposit && (
-              <div className="bg-[#F4F5F7] rounded-[12px] px-4 py-2.5 text-center min-w-[90px]">
-                <div className="text-base font-bold text-[#101B30]">${deposit}</div>
-                <div className="text-[10px] text-[#707683] uppercase tracking-wider">Deposit</div>
+            {fp.deposit && (
+              <div style={{ background: T.surfaceSoft, borderRadius: 12, padding: '10px 16px', textAlign: 'center', minWidth: 90 }}>
+                <div style={{ fontSize: 16, fontWeight: 500, color: T.ink, fontFamily: 'Inter, sans-serif' }}>${fp.deposit}</div>
+                <div style={{ fontSize: 10, color: T.mutedSoft, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 500, fontFamily: 'Inter, sans-serif' }}>Deposit</div>
               </div>
             )}
           </div>
 
-          {fullProduct.description && (
-            <div className="mb-4">
-              <p className={`text-sm text-[#404959] leading-relaxed ${!showMore ? 'line-clamp-3' : ''}`}>{fullProduct.description}</p>
-              {fullProduct.description.length > 150 && (
-                <button onClick={() => setShowMore(!showMore)} className="text-xs text-[#D42B65] hover:underline mt-1 flex items-center gap-0.5">
-                  {showMore ? 'Show less' : 'Show more'}
-                  {showMore ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          {fp.description && (
+            <div style={{ marginBottom: 16 }}>
+              <p style={{ fontSize: 14, color: T.body, lineHeight: 1.6, margin: 0, fontFamily: 'Inter, sans-serif' }}>{more ? fp.description : fp.description.slice(0, 200)}{!more && fp.description.length > 200 ? '...' : ''}</p>
+              {fp.description.length > 200 && (
+                <button onClick={() => setMore(!more)} style={{ fontSize: 12, color: T.primary, border: 'none', background: 'none', cursor: 'pointer', padding: 0, marginTop: 4, fontWeight: 500, fontFamily: 'Inter, sans-serif' }}>
+                  {more ? 'Show less' : 'Show more'}
                 </button>
               )}
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3 mb-5">
-            {(fullProduct.stock_available > 0 || fullProduct.available_quantity > 0) && (
-              <div className="flex items-center gap-2 text-sm text-[#707683]">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#707683" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                <span>{fullProduct.stock_available || fullProduct.available_quantity} available</span>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
+            {(fp.stock_available > 0 || fp.available_quantity > 0) && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: T.muted, fontFamily: 'Inter, sans-serif' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.muted} strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                {fp.stock_available || fp.available_quantity} available
               </div>
             )}
-            {fullProduct.free_delivery && (
-              <div className="flex items-center gap-2 text-sm text-[#707683]">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#707683" strokeWidth="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                <span>Free delivery</span>
+            {fp.free_delivery && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: T.muted, fontFamily: 'Inter, sans-serif' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.muted} strokeWidth="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                Free delivery
               </div>
             )}
           </div>
 
-          <button
-            onClick={() => { handleClose(); setTimeout(() => onBook?.(fullProduct), 300) }}
-            className="w-full py-3 rounded-[12px] font-medium text-base bg-[#D42B65] text-white hover:bg-[#EE4E86] transition-colors"
-          >
+          <button onClick={() => { onClose(); setTimeout(() => onBook?.(fp), 300) }}
+            style={{ width: '100%', padding: '12px 20px', borderRadius: 8, border: 'none', background: T.primary, color: '#fff', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
             Reserve now
           </button>
         </div>
