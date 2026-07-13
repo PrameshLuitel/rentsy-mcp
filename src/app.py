@@ -371,6 +371,14 @@ else:
     @app.get("/")
     async def root_landing():
         from fastapi.responses import HTMLResponse
+        debug_paths = f"""
+FRONTEND_DIST: {os.path.abspath(FRONTEND_DIST)}<br>
+CWD: {os.getcwd()}<br>
+__file__: {__file__}<br>
+Exists: {os.path.isdir(FRONTEND_DIST)}<br>
+Has index.html: {os.path.isfile(os.path.join(FRONTEND_DIST, 'index.html'))}<br>
+Dist listing: {os.listdir(FRONTEND_DIST) if os.path.isdir(FRONTEND_DIST) else 'N/A'}<br>
+"""
         return HTMLResponse(f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -401,6 +409,9 @@ else:
             <a href="/mcp/sse">🔌 MCP SSE Endpoint</a>
             <a href="/api/stats">📈 API Stats</a>
             <a href="/health">💚 Health</a>
+        </div>
+        <div style="margin-top:24px;padding:12px;background:#F4F5F7;border-radius:8px;font-size:10px;color:#707683;text-align:left;word-break:break-all;">
+            {debug_paths}
         </div>
     </div>
 </body>
