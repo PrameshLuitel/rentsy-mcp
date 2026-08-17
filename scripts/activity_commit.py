@@ -41,7 +41,7 @@ elif COMMITS <= 12:
 else:
     span_minutes = 480
 
-start_minute = random.randint(60, 240)
+start_minute = random.randint(540, 720)  # 9am-noon local -> same UTC day
 timestamps = sorted(random.sample(range(start_minute, start_minute + span_minutes), COMMITS))
 
 commit_messages = [
