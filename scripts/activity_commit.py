@@ -1,33 +1,47 @@
 #!/usr/bin/env python3
-"""Generate natural-looking commits (0-21 per run, clustered or spread based on volume)."""
-import os, random, datetime, subprocess
+"""Generate natural-looking commits (0-21 per run) and push with retries."""
+import os, random, datetime, subprocess, sys, time
 
-REPO = os.path.expanduser('~/rentsy-mcp')
+REPO = os.path.expanduser("~/rentsy-mcp")
 os.chdir(REPO)
+LOG = os.path.join(REPO, "scripts", ".push.log")
 
-subprocess.run(['git', 'pull', '--rebase'], capture_output=True)
+def log(msg):
+    with open(LOG, "a") as f:
+        f.write(f"{datetime.datetime.now().isoformat()} {msg}\n")
+    print(msg)
+
+def run(cmd, **kw):
+    return subprocess.run(cmd, capture_output=True, text=True, **kw)
+
+def push_with_retry(attempts=5):
+    for i in range(1, attempts + 1):
+        r = run(["git", "push", "origin", "HEAD"])
+        if r.returncode == 0:
+            return True
+        log(f"push attempt {i} failed: {r.stderr.strip()[:300]}")
+        time.sleep(random.randint(30, 90))
+    return False
+
+r = run(["git", "pull", "--rebase"])
+if r.returncode != 0:
+    log(f"pull --rebase failed: {r.stderr.strip()[:300]}")
 
 COMMITS = random.randint(0, 21)
-
 if COMMITS == 0:
-    print(f'Skipping {datetime.date.today()} — 0 commits today')
-    exit(0)
+    log(f"Skipping {datetime.date.today()} — 0 commits today")
+    sys.exit(0)
 
-# Spread pattern: many commits → spread wide, few → cluster tight
 if COMMITS <= 3:
-    # Cluster within 1 hour
     span_minutes = 60
 elif COMMITS <= 7:
-    # Within 3 hours
     span_minutes = 180
 elif COMMITS <= 12:
-    # Within 5 hours
     span_minutes = 300
 else:
-    # Spread across 8 hours
     span_minutes = 480
 
-start_minute = random.randint(60, 240)  # start between 9am and 1pm
+start_minute = random.randint(60, 240)
 timestamps = sorted(random.sample(range(start_minute, start_minute + span_minutes), COMMITS))
 
 commit_messages = [
@@ -326,7 +340,7 @@ commit_messages = [
     "chore: update state pulse",
     "chore: bump log timestamp",
     "chore: refresh state pulse",
-    "chore: sync marker timestamp",
+    "chore: sync state marker",
     "chore: periodic marker pulse",
     "chore: update marker log",
     "chore: routine marker state",
@@ -547,18 +561,23 @@ for i, ts_minutes in enumerate(timestamps):
     second = random.randint(0, 59)
     today = datetime.date.today()
     ts = datetime.datetime(today.year, today.month, today.day, hour, minute, second)
-    date_str = ts.strftime('%Y-%m-%d %H:%M:%S')
+    date_str = ts.strftime("%Y-%m-%d %H:%M:%S")
 
-    with open(os.path.join(REPO, 'scripts', '.heartbeat'), 'a') as f:
-        f.write(f'{ts.isoformat()} | commit-{i+1}/{COMMITS} | seed={random.getrandbits(16)}\n')
+    with open(os.path.join(REPO, "scripts", ".heartbeat"), "a") as f:
+        f.write(f"{ts.isoformat()} | commit-{i+1}/{COMMITS} | seed={random.getrandbits(16)}\n")
 
-    subprocess.run(['git', 'add', 'scripts/.heartbeat'], capture_output=True)
+    run(["git", "add", "scripts/.heartbeat"])
     msg = random.choice(commit_messages)
     env = os.environ.copy()
-    env['GIT_AUTHOR_DATE'] = date_str
-    env['GIT_COMMITTER_DATE'] = date_str
-    subprocess.run(['git', 'commit', '-m', msg], env=env, capture_output=True)
-    subprocess.run(['sleep', str(random.randint(2, 10))])
+    env["GIT_AUTHOR_DATE"] = date_str
+    env["GIT_COMMITTER_DATE"] = date_str
+    r = run(["git", "commit", "-m", msg], env=env)
+    if r.returncode != 0:
+        log(f"commit {i+1} failed: {r.stderr.strip()[:300]}")
+    time.sleep(random.randint(2, 10))
 
-subprocess.run(['git', 'push'], capture_output=True)
-print(f'Pushed {COMMITS} commits for {datetime.date.today()}')
+if push_with_retry():
+    log(f"Pushed {COMMITS} commits for {datetime.date.today()}")
+else:
+    log(f"PUSH FAILED for {datetime.date.today()} after retries — {COMMITS} commits local only")
+    sys.exit(1)
