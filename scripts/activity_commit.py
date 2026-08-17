@@ -27,7 +27,7 @@ r = run(["git", "pull", "--rebase"])
 if r.returncode != 0:
     log(f"pull --rebase failed: {r.stderr.strip()[:300]}")
 
-COMMITS = random.randint(0, 21)
+COMMITS = int(os.environ.get("COMMITS_OVERRIDE", random.randint(0, 21)))
 if COMMITS == 0:
     log(f"Skipping {datetime.date.today()} — 0 commits today")
     sys.exit(0)
